@@ -1,3 +1,6 @@
+import { HeaderApp } from "@/components/Header";
+import { colors } from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
 import { Image } from "react-native";
@@ -11,6 +14,7 @@ export default function TabLayout() {
         tabBarIconStyle: { fontSize: 13 },
         tabBarStyle: { backgroundColor: "#12141C", height: 90, paddingTop: 10 },
         tabBarShowLabel: false,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -29,6 +33,11 @@ export default function TabLayout() {
                 source={require("@/assets/images/menu-icons/store.png")}
               />
             );
+          },
+          headerTitle: (props) => <HeaderApp headerTitle="Store" showIcon />,
+          headerStyle: {
+            display: "none",
+            backgroundColor: colors.background,
           },
         }}
       />
