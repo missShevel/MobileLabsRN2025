@@ -1,17 +1,23 @@
-import { View, Text, StyleSheet } from "react-native";
+import ChatItem from "@/components/ChatItem";
+import ChatTabs from "@/components/ChatTabs";
+import { Container } from "@/components/Container";
+import { HeaderApp } from "@/components/Header";
+import { chatData } from "@/data/chat-data";
+import { FlatList } from "react-native";
 
 export default function Tab() {
   return (
-    <View style={styles.container}>
-      <Text>Tab Chat</Text>
-    </View>
-  );
+    <Container>
+      <HeaderApp headerTitle="Chat" showIcon/>
+      <ChatTabs />
+      <FlatList
+        data={chatData}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <ChatItem chat={item} />}
+        showsVerticalScrollIndicator={false}
+      />
+    </Container>
+  )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
+
