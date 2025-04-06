@@ -1,0 +1,48 @@
+export const chatData = [
+    {
+      id: '1',
+      name: 'Mark Dyson',
+      message: "I'm already starting to play",
+      date: '14 Jun',
+      unread: true,
+      online: true,
+      avatar: require('@/assets/images/avatar1.png'),
+    },
+    {
+      id: '2',
+      name: 'Mark Dyson',
+      message: 'You: Ok',
+      date: '14 Jun',
+      unread: false,
+      online: false,
+      avatar: require('@/assets/images/avatar1.png'),
+    },
+    {
+      id: '3',
+      name: 'Player123',
+      message: 'You: Ok',
+      date: '14 Jun',
+      unread: false,
+      online: false,
+      avatar: require('@/assets/images/avatar2.png'),
+    },
+    {
+      id: '4',
+      name: 'Player',
+      message: 'Hello!',
+      date: '12 Jun',
+      unread: false,
+      online: false,
+      avatar: require('@/assets/images/avatar3.png'),
+    },
+    {
+      id: '5',
+      name: '💎 Sxpresso',
+      message: 'Ok',
+      date: '12 Jun',
+      unread: false,
+      online: true,
+      avatar: require('@/assets/images/avatar3.png'),
+    },
+  ];
+  
