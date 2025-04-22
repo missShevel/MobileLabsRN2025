@@ -1,28 +1,27 @@
 // IMPORTANT: Import this at the VERY TOP
-import 'react-native-gesture-handler';
+import "react-native-gesture-handler";
 
-import React from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import React from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   return (
     <>
-      {/* StatusBar component from Expo */}
-      <StatusBar style="auto" />
-      {/* Stack defines the navigator for files in the 'app' directory */}
-      <Stack>
-        {/* Screen definition for index.tsx */}
-        <Stack.Screen
-          name="index" // Corresponds to app/index.tsx
-          options={{ title: 'Clicker Game' }}
-         />
-        {/* Screen definition for tasks.tsx */}
-        <Stack.Screen
-          name="tasks" // Corresponds to app/tasks.tsx
-          options={{ title: 'Tasks List' }}
-         />
-      </Stack>
+      <GestureHandlerRootView>
+        <StatusBar style="auto" />
+        <Stack>
+          <Stack.Screen
+            name="index" 
+            options={{ title: "Clicker Game" }}
+          />
+          <Stack.Screen
+            name="tasks"
+            options={{ title: "Tasks List" }}
+          />
+        </Stack>
+      </GestureHandlerRootView>
     </>
   );
 }
