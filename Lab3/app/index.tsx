@@ -20,6 +20,9 @@ const MainScreen = () => {
   const startPositionX = useSharedValue(0);
   const startPositionY = useSharedValue(0);
 
+  const scale = useSharedValue(1);
+  const startScale = useSharedValue(1);
+
   const handleSingleTap = () => {
     setScore((currentScore) => {
       const newScore = currentScore + 1;
@@ -53,7 +56,15 @@ const MainScreen = () => {
     });
   };
 
-  // Define Pan and Fling first to get references
+  const handlePinch = () => {
+    const bonusPoints = 10; // Award 10 bonus points for pinching
+    setScore((currentScore) => {
+      const newScore = currentScore + bonusPoints;
+      console.log(`Pinch End! +${bonusPoints}. New Score: ${newScore}`);
+      return newScore;
+    });
+  };
+
   const panGesture = Gesture.Pan()
     .onBegin(() => {
       startPositionX.value = positionX.value;
@@ -70,10 +81,9 @@ const MainScreen = () => {
       runOnJS(handleFling)();
     });
 
-  // Now define taps, requiring Pan and Fling to fail
   const singleTapGesture = Gesture.Tap()
     .maxDuration(250)
-    .requireExternalGestureToFail(panGesture, flingGesture) // Add this
+    .requireExternalGestureToFail(panGesture, flingGesture)
     .onStart(() => {
       runOnJS(handleSingleTap)();
     });
@@ -81,30 +91,41 @@ const MainScreen = () => {
   const doubleTapGesture = Gesture.Tap()
     .maxDuration(250)
     .numberOfTaps(2)
-    .requireExternalGestureToFail(panGesture, flingGesture) // Add this
+    .requireExternalGestureToFail(panGesture, flingGesture)
     .onStart(() => {
       runOnJS(handleDoubleTap)();
     });
 
   const longPressGesture = Gesture.LongPress()
     .minDuration(800)
-    .requireExternalGestureToFail(panGesture, flingGesture) // Add this
+    .requireExternalGestureToFail(panGesture, flingGesture)
     .onStart(() => {
       runOnJS(handleLongPress)();
     });
 
-  // Group the taps/long press
   const tapGestures = Gesture.Exclusive(
     doubleTapGesture,
     longPressGesture,
     singleTapGesture
   );
 
-  // Combine all using Simultaneous - interactions are now managed by requireExternalGestureToFail
+  const pinchGesture = Gesture.Pinch()
+    .onBegin(() => {
+        startScale.value = scale.value;
+    })
+    .onUpdate((event) => {
+        scale.value = startScale.value * event.scale;
+    })
+    .onEnd(() => {
+        runOnJS(handlePinch)(); // Award points when pinch ends
+    });
+
+
   const combinedGestures = Gesture.Simultaneous(
     panGesture,
     tapGestures,
-    flingGesture
+    flingGesture,
+    pinchGesture // Add pinch here
   );
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -112,6 +133,7 @@ const MainScreen = () => {
       transform: [
         { translateX: positionX.value },
         { translateY: positionY.value },
+        { scale: scale.value }, // Add scale transform
       ],
     };
   });
