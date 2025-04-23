@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import styled from "styled-components/native";
 
-const tabs = ["Open chats", "My friends"];
+type Props = {
+  tabs: string[]
+}
 
-const ChatTabs = () => {
+const PageTabs = ({tabs}: Props) => {
   const [active, setActive] = useState(tabs[0]);
   return (
     <TabContainer>
@@ -18,7 +20,7 @@ const ChatTabs = () => {
   );
 };
 
-export default ChatTabs;
+export default PageTabs;
 
 const TabContainer = styled.View`
   flex-direction: row;

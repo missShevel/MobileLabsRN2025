@@ -1,15 +1,17 @@
 import ChatItem from "@/components/ChatItem";
-import ChatTabs from "@/components/ChatTabs";
+import ChatTabs from "@/components/PageTabs";
 import { Container } from "@/components/Container";
 import { HeaderApp } from "@/components/Header";
 import { chatData } from "@/data/chat-data";
 import { FlatList } from "react-native";
 
 export default function Tab() {
+  const tabs = ["Open chats", "My friends"];
+
   return (
     <Container>
-      <HeaderApp headerTitle="Chat" showIcon/>
-      <ChatTabs />
+      <HeaderApp headerTitle="Chat" showIcon />
+      <ChatTabs tabs={tabs} />
       <FlatList
         data={chatData}
         keyExtractor={(item) => item.id}
@@ -17,7 +19,5 @@ export default function Tab() {
         showsVerticalScrollIndicator={false}
       />
     </Container>
-  )
+  );
 }
-
-
