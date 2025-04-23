@@ -44,7 +44,7 @@ const MenuList = ({ menuItems }: Props) => {
       keyExtractor={(item) => item.id}
       ItemSeparatorComponent={() => <Separator />}
       scrollEnabled={false}
-      style={{borderRadius: 8}}
+      style={{borderRadius: 8, paddingTop: 18}}
     />
   );
 };
