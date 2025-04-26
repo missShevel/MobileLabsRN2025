@@ -1,50 +1,83 @@
-# Welcome to your Expo app 👋
+# Lab4: To-Do Reminder App with Notifications
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
 
-## Get started
+Lab4 is a feature-rich to-do reminder app built with React Native and Expo. It allows users to create, manage, and schedule reminders with push notifications. The app integrates with OneSignal to handle notifications and provides a clean, user-friendly interface for managing tasks. It also includes advanced features like date pickers, animations, and state management.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Features
 
-2. Start the app
+### 1. To-Do List Management
 
-   ```bash
-    npx expo start
-   ```
+- **Add Reminders**: Users can create reminders with a title, description, and scheduled time.
+- **Delete Reminders**: Remove reminders from the list, with optional cancellation of associated notifications.
+- **Mark as Completed**: Toggle reminders as completed or incomplete.
 
-In the output, you'll find options to open the app in a
+### 2. Push Notifications
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **OneSignal Integration**: Notifications are scheduled using OneSignal's API. + Firebase 
+- **Custom Notifications**: Each reminder triggers a notification with a custom title and description.
+- **Notification Cancellation**: Notifications for deleted or completed reminders can be canceled.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 3. Date and Time Picker
 
-## Get a fresh project
+- **DatePicker Integration**: Users can select a specific date and time for their reminders.
+- **Validation**: Ensures that reminders are scheduled for future times only.
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## Technical Details
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Libraries and Tools
 
-## Learn more
+- **React Native**: Core framework for building the app.
+- **Expo**: Simplifies development and deployment.
+- **OneSignal**: Handles push notifications.
+- **React Native Gesture Handler**: For smooth touch interactions.
+- **React Native Reanimated**: For animations.
+- **React Native Date Picker**: Provides a customizable date and time picker.
 
-To learn more about developing your project with Expo, look at the following resources:
+### Folder Structure
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **`app/`**: Contains the main application logic, including screens and components.
+- **`android/`**: Native Android configurations for the app.
+---
 
-## Join the community
+## How It Works
 
-Join our community of developers creating universal apps.
+### Adding a Reminder
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+1. Enter a title and optional description for the reminder.
+2. Select a date and time using the date picker.
+3. Tap the "Add Reminder" button to save the task and schedule a notification.
+
+### Managing Reminders
+
+- **Mark as Completed**: Tap the checkbox to mark a task as completed.
+- **Edit Reminder**: Modify the title, description, or time of an existing reminder.
+- **Delete Reminder**: Remove a task and optionally cancel its notification.
+
+### Notifications
+
+- Notifications are scheduled using OneSignal's REST API.
+- Each notification includes the reminder's title and description.
+- Notifications are automatically canceled for completed or deleted tasks.
+
+---
+
+## Screenshots
+1. Main screen
+![alt text](image.png)
+
+2. After adding a To-Do
+![alt text](image-1.png)
+
+3. Reminder sent a push notification
+![alt text](image-2.png)
+
+4. Completed todo
+![alt text](image-3.png)
+
+5. Removed reminder
+![alt text](image-4.png)
