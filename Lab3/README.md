@@ -1,50 +1,52 @@
-# Welcome to your Expo app 👋
+# Lab3: Clicker Game with Tasks
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Overview
+Lab3 is an interactive clicker game designed to engage users with various gesture-based tasks. The app combines fun gameplay mechanics with smooth animations and state management, making it a great example of React Native's capabilities.
 
-## Get started
+---
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+### 1. Gesture-Based Gameplay
+- **Single Tap**: Perform a quick tap to complete tasks. Gives +1 point
+- **Double Tap**: Tap twice in quick succession for specific tasks. Gives +2 points
+- **Long Press**: Hold down on the screen to trigger long-press actions. Gives +5 points (for 3 seconds)
+- **Drag and Drop**: Drag objects to specific targets.
+- **Swipe**: Swipe in different directions to complete tasks. (gives random number of points)
+- **Pinch**: Use two fingers to pinch in or out for zoom-related tasks.
 
-2. Start the app
+### 2. Task Management
+- A dynamic task list is displayed, showing all available gestures and their progress.
+- Tasks are updated in real-time as users perform gestures.
+- Completed tasks are marked, and progress is visually represented.
 
-   ```bash
-    npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Technical Details
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Libraries and Tools
+- **React Native**: Core framework for building the app.
+- **React Native Gesture Handler**: For handling complex gestures.
+- **React Native Reanimated**: For creating smooth animations.
+- **React Context API**: For state management.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Folder Structure
+- **`app/`**: Contains code for 2 main screens in the app
+- **`context/`**: Houses the context provider for managing app state.
+- **`hooks/`**: Stores a custom hook to reuse clicker gestures.
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Screenshots from the app
 
-```bash
-npm run reset-project
-```
+1. Main screen after first run:
+![main screen](main_screen1.png)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Tasks list screen after first run:
+![tasks screen](tasks_screen1.png)
 
-## Learn more
+3. Main screen after all tasks completed:
+![main screen](main_screen2.png)
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+4. Tasks screen after all tasks completed:
+![tasks screen](tasks_screen2.png)
