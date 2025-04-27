@@ -90,6 +90,54 @@ export default function FileManagerScreen() {
     }
   };
 
+  const handleDeleteItem = async (itemToDelete: ItemDetails | null) => {
+    if (!itemToDelete) {
+      Alert.alert("Error", "No item selected for deletion.");
+      return;
+    }
+
+    console.log("Attempting to delete item:", itemToDelete.uri);
+    try {
+      await FileSystem.deleteAsync(itemToDelete.uri, { idempotent: true });
+      console.log("Item deleted successfully");
+      Alert.alert("Success", `"${itemToDelete.name}" deleted successfully.`);
+      setDetailsModalVisible(false); // Close details modal after deletion
+      setSelectedItemDetails(null); // Clear selected item
+      loadDirectoryItems(currentPath); // Refresh the list
+    } catch (error: any) {
+      console.error("Error deleting item:", error);
+      Alert.alert("Error", `Could not delete "${itemToDelete.name}".`);
+      setDetailsModalVisible(false); // Close modal even on error
+      setSelectedItemDetails(null);
+    }
+  };
+
+  // --- Function to show deletion confirmation ---
+  const confirmDeletion = (itemToConfirm: ItemDetails | null) => {
+    if (!itemToConfirm) return;
+
+    const itemType = itemToConfirm.isDirectory ? "folder" : "file";
+    Alert.alert(
+      `Confirm Deletion`, // Title
+      `Are you sure you want to delete the ${itemType} "${itemToConfirm.name}"? This cannot be undone.`, // Message [cite: 8]
+      [
+        // Buttons [cite: 8]
+        {
+          text: "Cancel",
+          onPress: () => console.log("Deletion cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => handleDeleteItem(itemToConfirm), // Call delete function on confirm
+          style: "destructive", // iOS style hint
+        },
+      ],
+      { cancelable: true } // Allow dismissing by tapping outside on Android
+    );
+  };
+  // ------------------------------------------
+
   const loadDirectoryItems = useCallback(
     /* ... keep existing implementation ... */ async (path: string) => {
       setIsLoading(true); // Make sure loading starts
@@ -391,6 +439,12 @@ export default function FileManagerScreen() {
             <Button
               title="Close"
               onPress={() => setDetailsModalVisible(false)}
+            />
+            <View style={{ height: 10 }} />
+            <Button
+              title="Delete"
+              color="#FF3B30" // Red color for destructive action
+              onPress={() => confirmDeletion(selectedItemDetails)} // Trigger confirmation
             />
           </View>
         </View>
@@ -723,5 +777,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace", // Monospace font for code/text
     color: "#333",
+  },
+  modalActionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between", // Space out Close and Delete
+    marginTop: 20, // Add margin above buttons
+    paddingTop: 10, // Add padding top
+    borderTopColor: "#eee", // Separator line
+    borderTopWidth: 1,
   },
 });
