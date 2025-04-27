@@ -13,6 +13,7 @@ import {
   TextInput,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
@@ -68,9 +69,15 @@ export default function FileManagerScreen() {
   const [isFileLoading, setIsFileLoading] = useState<boolean>(false); // Loading state for file content
   // ---------------------------------
 
+  // --- State for Editing within View File Modal ---
+  const [isEditingFile, setIsEditingFile] = useState<boolean>(false);
+  const [editedFileContent, setEditedFileContent] = useState<string>("");
+  // ---------------------------------------------
+
   const readFileContent = async (item: FileSystemItem) => {
     console.log("Reading file:", item.uri);
     setViewingFileUri(item.uri); // Store URI to get name later if needed
+    setIsEditingFile(false);
     setIsFileLoading(true); // Start loading file content
     setViewingFileContent(null); // Clear previous content
     setViewFileModalVisible(true); // Show modal immediately
@@ -109,6 +116,29 @@ export default function FileManagerScreen() {
       Alert.alert("Error", `Could not delete "${itemToDelete.name}".`);
       setDetailsModalVisible(false); // Close modal even on error
       setSelectedItemDetails(null);
+    }
+  };
+
+  const handleSaveFile = async () => {
+    if (!viewingFileUri) {
+      Alert.alert("Error", "No file URI specified for saving.");
+      return;
+    }
+    console.log("Saving file:", viewingFileUri);
+    setIsFileLoading(true); // Use loading indicator during save
+
+    try {
+      await FileSystem.writeAsStringAsync(viewingFileUri, editedFileContent);
+      console.log("File saved successfully");
+      setViewingFileContent(editedFileContent); // Update the view content
+      setIsEditingFile(false); // Exit edit mode
+      Alert.alert("Success", "File saved successfully.");
+    } catch (error: any) {
+      console.error("Error saving file:", error);
+      Alert.alert("Error Saving File", "Could not save changes.");
+      // Stay in edit mode on error
+    } finally {
+      setIsFileLoading(false); // Stop loading indicator
     }
   };
 
@@ -393,246 +423,328 @@ export default function FileManagerScreen() {
     .replace(/\/$/, "");
 
   return (
-    <View style={styles.container}>
-      {/* Details Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={detailsModalVisible} // Use renamed state variable
-        onRequestClose={() => setDetailsModalVisible(false)}
-      >
-        {/* ... keep existing Modal content ... */}
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Details</Text>
-            {selectedItemDetails ? (
-              <>
-                <Text style={styles.detailText}>
-                  Name: {selectedItemDetails.name}
-                </Text>
-                <Text style={styles.detailText}>
-                  Type: {selectedItemDetails.type}
-                </Text>
-                {selectedItemDetails.size !== undefined && (
-                  <Text style={styles.detailText}>
-                    {" "}
-                    Size: {formatBytes(selectedItemDetails.size)}{" "}
-                  </Text>
-                )}
-                {selectedItemDetails.modificationTime !== undefined && (
-                  <Text style={styles.detailText}>
-                    {" "}
-                    Modified:{" "}
-                    {format(
-                      new Date(selectedItemDetails.modificationTime * 1000),
-                      "Pp"
-                    )}{" "}
-                  </Text>
-                )}
-                <Text style={styles.detailTextUri}>
-                  URI: {selectedItemDetails.uri}
-                </Text>
-              </>
-            ) : (
-              <Text>Loading details...</Text>
-            )}
-            <Button
-              title="Close"
-              onPress={() => setDetailsModalVisible(false)}
-            />
-            <View style={{ height: 10 }} />
-            <Button
-              title="Delete"
-              color="#FF3B30" // Red color for destructive action
-              onPress={() => confirmDeletion(selectedItemDetails)} // Trigger confirmation
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* --- New Folder Modal --- */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={newFolderModalVisible}
-        onRequestClose={() => {
-          setNewFolderModalVisible(false);
-          setNewFolderName(""); // Clear input on close
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Create New Folder</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Folder Name"
-              value={newFolderName}
-              onChangeText={setNewFolderName}
-              autoCapitalize="none"
-            />
-            <View style={styles.modalButtonRow}>
-              <Button
-                title="Cancel"
-                onPress={() => {
-                  setNewFolderModalVisible(false);
-                  setNewFolderName(""); // Clear input on cancel
-                }}
-                color="#888"
-              />
-              <View style={{ width: 10 }} /> {/* Spacer */}
-              <Button title="Create" onPress={handleCreateFolder} />
-            </View>
-          </View>
-        </View>
-      </Modal>
-      {/* ------------------------ */}
-
-      {/* --- New File Modal --- */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={newFileModalVisible}
-        onRequestClose={() => {
-          setNewFileModalVisible(false);
-          setNewFileName("");
-          setNewFileContent("");
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Create New Text File</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="File Name (.txt)"
-              value={newFileName}
-              onChangeText={setNewFileName}
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={[styles.input, styles.multilineInput]} // Add multiline style
-              placeholder="Initial Content (optional)"
-              value={newFileContent}
-              onChangeText={setNewFileContent}
-              multiline={true} // Enable multiline
-              numberOfLines={4} // Suggest initial height
-            />
-            <View style={styles.modalButtonRow}>
-              <Button
-                title="Cancel"
-                onPress={() => {
-                  setNewFileModalVisible(false);
-                  setNewFileName("");
-                  setNewFileContent("");
-                }}
-                color="#888"
-              />
-              <View style={{ width: 10 }} />
-              <Button title="Create" onPress={handleCreateFile} />
-            </View>
-          </View>
-        </View>
-      </Modal>
-      {/* ---------------------- */}
-
-      {/* --- View File Modal --- */}
-      <Modal
-        animationType="slide"
-        transparent={false} // Usually false for full screen view
-        visible={viewFileModalVisible}
-        onRequestClose={() => {
-          setViewFileModalVisible(false);
-          setViewingFileUri(null);
-          setViewingFileContent(null);
-        }}
-      >
-        <View style={styles.fileViewContainer}>
-          {/* Header with Filename and Close Button */}
-          <View style={styles.fileViewHeader}>
-            <Text
-              style={styles.fileViewTitle}
-              numberOfLines={1}
-              ellipsizeMode="middle"
-            >
-              {getFileNameFromUri(viewingFileUri)}
-            </Text>
-            <Button
-              title="Close"
-              onPress={() => setViewFileModalVisible(false)}
-            />
-          </View>
-
-          {/* Content Area */}
-          <ScrollView style={styles.fileContentScrollView}>
-            {isFileLoading ? (
-              <ActivityIndicator
-                size="large"
-                style={styles.fileContentLoader}
-              />
-            ) : (
-              <Text style={styles.fileContentText}>
-                {viewingFileContent ?? ""}
-              </Text>
-            )}
-          </ScrollView>
-          {/* TODO: Add Edit button later here */}
-        </View>
-      </Modal>
-      {/* ----------------------- */}
-
-      {/* --- Button Row --- */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            currentPath === baseDir && styles.buttonDisabled,
-          ]}
-          onPress={handleGoUp}
-          disabled={currentPath === baseDir}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <View style={styles.container}>
+        {/* Details Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={detailsModalVisible} // Use renamed state variable
+          onRequestClose={() => setDetailsModalVisible(false)}
         >
-          <Text style={styles.buttonText}>⬆️ Go Up</Text>
-        </TouchableOpacity>
+          {/* ... keep existing Modal content ... */}
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Details</Text>
+              {selectedItemDetails ? (
+                <>
+                  <Text style={styles.detailText}>
+                    Name: {selectedItemDetails.name}
+                  </Text>
+                  <Text style={styles.detailText}>
+                    Type: {selectedItemDetails.type}
+                  </Text>
+                  {selectedItemDetails.size !== undefined && (
+                    <Text style={styles.detailText}>
+                      {" "}
+                      Size: {formatBytes(selectedItemDetails.size)}{" "}
+                    </Text>
+                  )}
+                  {selectedItemDetails.modificationTime !== undefined && (
+                    <Text style={styles.detailText}>
+                      {" "}
+                      Modified:{" "}
+                      {format(
+                        new Date(selectedItemDetails.modificationTime * 1000),
+                        "Pp"
+                      )}{" "}
+                    </Text>
+                  )}
+                  <Text style={styles.detailTextUri}>
+                    URI: {selectedItemDetails.uri}
+                  </Text>
+                </>
+              ) : (
+                <Text>Loading details...</Text>
+              )}
+              <Button
+                title="Close"
+                onPress={() => setDetailsModalVisible(false)}
+              />
+              <View style={{ height: 10 }} />
+              <Button
+                title="Delete"
+                color="#FF3B30" // Red color for destructive action
+                onPress={() => confirmDeletion(selectedItemDetails)} // Trigger confirmation
+              />
+            </View>
+          </View>
+        </Modal>
 
-        {/* Add New Folder Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {
-            setNewFolderName(""); // Clear name before opening
-            setNewFolderModalVisible(true);
+        {/* --- New Folder Modal --- */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={newFolderModalVisible}
+          onRequestClose={() => {
+            setNewFolderModalVisible(false);
+            setNewFolderName(""); // Clear input on close
           }}
         >
-          <Text style={styles.buttonText}>➕ New Folder</Text>
-        </TouchableOpacity>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Create New Folder</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Folder Name"
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                autoCapitalize="none"
+              />
+              <View style={styles.modalButtonRow}>
+                <Button
+                  title="Cancel"
+                  onPress={() => {
+                    setNewFolderModalVisible(false);
+                    setNewFolderName(""); // Clear input on cancel
+                  }}
+                  color="#888"
+                />
+                <View style={{ width: 10 }} /> {/* Spacer */}
+                <Button title="Create" onPress={handleCreateFolder} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+        {/* ------------------------ */}
 
-        {/* --- Add New File Button --- */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {
-            setNewFileName(""); // Clear inputs before opening
+        {/* --- New File Modal --- */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={newFileModalVisible}
+          onRequestClose={() => {
+            setNewFileModalVisible(false);
+            setNewFileName("");
             setNewFileContent("");
-            setNewFileModalVisible(true);
           }}
         >
-          <Text style={styles.buttonText}>➕ New File</Text>
-        </TouchableOpacity>
-        {/* --------------------------- */}
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>Create New Text File</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="File Name (.txt)"
+                value={newFileName}
+                onChangeText={setNewFileName}
+                autoCapitalize="none"
+              />
+              <TextInput
+                style={[styles.input, styles.multilineInput]} // Add multiline style
+                placeholder="Initial Content (optional)"
+                value={newFileContent}
+                onChangeText={setNewFileContent}
+                multiline={true} // Enable multiline
+                numberOfLines={4} // Suggest initial height
+              />
+              <View style={styles.modalButtonRow}>
+                <Button
+                  title="Cancel"
+                  onPress={() => {
+                    setNewFileModalVisible(false);
+                    setNewFileName("");
+                    setNewFileContent("");
+                  }}
+                  color="#888"
+                />
+                <View style={{ width: 10 }} />
+                <Button title="Create" onPress={handleCreateFile} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+        {/* ---------------------- */}
+
+        {/* --- View File Modal --- */}
+        <Modal
+          animationType="slide"
+          transparent={false} // Usually false for full screen view
+          visible={viewFileModalVisible}
+          onRequestClose={() => {
+            if (isEditingFile) {
+              // Ask for confirmation if editing
+              Alert.alert(
+                "Discard Changes?",
+                "Are you sure you want to close without saving changes?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Discard",
+                    onPress: () => {
+                      setIsEditingFile(false);
+                      setViewFileModalVisible(false);
+                    },
+                    style: "destructive",
+                  },
+                ]
+              );
+            } else {
+              setViewFileModalVisible(false);
+            }
+            // Reset state if not editing or discarded
+            if (!isEditingFile) {
+              setViewingFileUri(null);
+              setViewingFileContent(null);
+              setIsEditingFile(false); // Ensure edit mode is off
+            }
+          }}
+        >
+          <View style={styles.fileViewContainer}>
+            {/* Header with Filename and Action Buttons */}
+            <View style={styles.fileViewHeader}>
+              <Text
+                style={styles.fileViewTitle}
+                numberOfLines={1}
+                ellipsizeMode="middle"
+              >
+                {getFileNameFromUri(viewingFileUri)}
+              </Text>
+              {/* Conditional Buttons based on edit mode */}
+              {isEditingFile ? (
+                <View style={styles.headerButtonRow}>
+                  <Button
+                    title="Cancel"
+                    onPress={() => setIsEditingFile(false)}
+                    color="#888"
+                  />
+                  <View style={{ width: 10 }} />
+                  <Button
+                    title="Save"
+                    onPress={handleSaveFile}
+                    disabled={isFileLoading}
+                  />
+                </View>
+              ) : (
+                <View style={styles.headerButtonRow}>
+                  <Button
+                    title="Edit"
+                    onPress={() => {
+                      setEditedFileContent(viewingFileContent ?? ""); // Initialize editor
+                      setIsEditingFile(true);
+                    }}
+                    disabled={isFileLoading || viewingFileContent === null} // Disable if loading or content failed
+                  />
+                  <View style={{ width: 10 }} />
+                  <Button
+                    title="Close"
+                    onPress={() => setViewFileModalVisible(false)}
+                  />
+                </View>
+              )}
+            </View>
+
+            {/* Content Area */}
+            <ScrollView
+              style={styles.fileContentScrollView}
+              contentContainerStyle={{ flexGrow: 1 }}
+            >
+              {isFileLoading && !isEditingFile ? ( // Show loader only when loading initial content
+                <ActivityIndicator
+                  size="large"
+                  style={styles.fileContentLoader}
+                />
+              ) : isEditingFile ? (
+                // --- Editing View ---
+                <TextInput
+                  style={styles.fileEditTextInput}
+                  value={editedFileContent}
+                  onChangeText={setEditedFileContent}
+                  multiline={true}
+                  autoFocus={true} // Focus input when editing starts
+                  textAlignVertical="top" // Android alignment
+                />
+              ) : (
+                // --------------------
+                // --- Reading View ---
+                <Text style={styles.fileContentText} selectable={true}>
+                  {viewingFileContent ?? "Could not load content."}
+                </Text>
+                // ------------------
+              )}
+            </ScrollView>
+            {isFileLoading && isEditingFile && (
+              <ActivityIndicator
+                size="small"
+                color="#007AFF"
+                style={{
+                  position: "absolute",
+                  bottom: 10,
+                  alignSelf: "center",
+                }}
+              />
+            )}
+          </View>
+        </Modal>
+        {/* ----------------------- */}
+
+        {/* --- Button Row --- */}
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              currentPath === baseDir && styles.buttonDisabled,
+            ]}
+            onPress={handleGoUp}
+            disabled={currentPath === baseDir}
+          >
+            <Text style={styles.buttonText}>⬆️ Go Up</Text>
+          </TouchableOpacity>
+
+          {/* Add New Folder Button */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              setNewFolderName(""); // Clear name before opening
+              setNewFolderModalVisible(true);
+            }}
+          >
+            <Text style={styles.buttonText}>➕ New Folder</Text>
+          </TouchableOpacity>
+
+          {/* --- Add New File Button --- */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => {
+              setNewFileName(""); // Clear inputs before opening
+              setNewFileContent("");
+              setNewFileModalVisible(true);
+            }}
+          >
+            <Text style={styles.buttonText}>➕ New File</Text>
+          </TouchableOpacity>
+          {/* --------------------------- */}
+        </View>
+        {/* ------------------ */}
+
+        <Text style={styles.pathText}>Path: {displayPath || "AppData"}</Text>
+
+        {isLoading ? (
+          <ActivityIndicator size="large" style={styles.loader} />
+        ) : items.length === 0 ? (
+          <Text style={styles.emptyText}>Directory is empty</Text>
+        ) : (
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.uri}
+            style={styles.list}
+          />
+        )}
       </View>
-      {/* ------------------ */}
-
-      <Text style={styles.pathText}>Path: {displayPath || "AppData"}</Text>
-
-      {isLoading ? (
-        <ActivityIndicator size="large" style={styles.loader} />
-      ) : items.length === 0 ? (
-        <Text style={styles.emptyText}>Directory is empty</Text>
-      ) : (
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.uri}
-          style={styles.list}
-        />
-      )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -785,5 +897,17 @@ const styles = StyleSheet.create({
     paddingTop: 10, // Add padding top
     borderTopColor: "#eee", // Separator line
     borderTopWidth: 1,
+  },
+  fileEditTextInput: {
+    flex: 1, // Take up available space in ScrollView
+    fontSize: 16,
+    fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+    color: "#333",
+    padding: 15,
+    textAlignVertical: "top", // Important for Android multiline
+  },
+  headerButtonRow: {
+    // Style for buttons in header
+    flexDirection: "row",
   },
 });
