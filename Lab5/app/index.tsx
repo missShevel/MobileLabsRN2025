@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 // Add TextInput to imports
 import {
   View,
@@ -74,6 +74,40 @@ export default function FileManagerScreen() {
   const [editedFileContent, setEditedFileContent] = useState<string>("");
   // ---------------------------------------------
 
+  // --- State for Storage Stats ---
+  const [totalSpace, setTotalSpace] = useState<number | null>(null);
+  const [freeSpace, setFreeSpace] = useState<number | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState<boolean>(true); // Loading state for stats
+  // -------------------------------
+
+  // --- Function to fetch storage stats ---
+  const fetchStorageStats = async () => {
+    console.log("Fetching storage stats...");
+    setIsStatsLoading(true);
+    try {
+      const total = await FileSystem.getTotalDiskCapacityAsync();
+      const free = await FileSystem.getFreeDiskStorageAsync();
+      setTotalSpace(total);
+      setFreeSpace(free);
+      console.log(`Storage: Total=${total}, Free=${free}`);
+    } catch (error) {
+      console.error("Error fetching storage stats:", error);
+      Alert.alert("Error", "Could not fetch storage statistics.");
+      // Keep stats null or set to 0? Let's keep null to indicate failure.
+      setTotalSpace(null);
+      setFreeSpace(null);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+  // -------------------------------------
+
+  // --- useEffect for fetching stats on mount ---
+  useEffect(() => {
+    fetchStorageStats(); // Fetch stats when the component mounts
+  }, []); // Empty dependency array ensures it runs only once
+  // -------------------------------------------
+
   const readFileContent = async (item: FileSystemItem) => {
     console.log("Reading file:", item.uri);
     setViewingFileUri(item.uri); // Store URI to get name later if needed
@@ -111,6 +145,7 @@ export default function FileManagerScreen() {
       setDetailsModalVisible(false); // Close details modal after deletion
       setSelectedItemDetails(null); // Clear selected item
       loadDirectoryItems(currentPath); // Refresh the list
+      await fetchStorageStats();
     } catch (error: any) {
       console.error("Error deleting item:", error);
       Alert.alert("Error", `Could not delete "${itemToDelete.name}".`);
@@ -334,6 +369,7 @@ export default function FileManagerScreen() {
       setNewFolderModalVisible(false); // Close modal
       setNewFolderName(""); // Clear input
       loadDirectoryItems(currentPath); // Refresh the list
+      await fetchStorageStats();
     } catch (error: any) {
       console.error("Error creating folder:", error);
       // Check for specific errors if possible, e.g., file exists
@@ -380,6 +416,7 @@ export default function FileManagerScreen() {
       setNewFileName(""); // Clear inputs
       setNewFileContent("");
       loadDirectoryItems(currentPath); // Refresh the list
+      await fetchStorageStats();
     } catch (error: any) {
       console.error("Error creating file:", error);
       if (error.code === "EEXIST") {
@@ -395,6 +432,12 @@ export default function FileManagerScreen() {
       }
     }
   };
+
+  const usedSpace = useMemo(
+    () =>
+      totalSpace !== null && freeSpace !== null ? totalSpace - freeSpace : 0,
+    [totalSpace, freeSpace]
+  );
 
   useEffect(() => {
     /* ... keep existing implementation ... */
@@ -733,8 +776,6 @@ export default function FileManagerScreen() {
 
         {isLoading ? (
           <ActivityIndicator size="large" style={styles.loader} />
-        ) : items.length === 0 ? (
-          <Text style={styles.emptyText}>Directory is empty</Text>
         ) : (
           <FlatList
             data={items}
@@ -743,6 +784,23 @@ export default function FileManagerScreen() {
             style={styles.list}
           />
         )}
+
+        {/* --- Storage Stats Area --- */}
+        <View style={styles.statsArea}>
+          {isStatsLoading ? (
+            <ActivityIndicator size="small" />
+          ) : totalSpace !== null && freeSpace !== null ? (
+            <>
+              <Text style={styles.statsText}>
+                Storage: {formatBytes(usedSpace)} Used /{" "}
+                {formatBytes(totalSpace)} Total ({formatBytes(freeSpace)} Free)
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.statsText}>Storage info unavailable.</Text>
+          )}
+        </View>
+        {/* ----------------------- */}
       </View>
     </KeyboardAvoidingView>
   );
@@ -909,5 +967,24 @@ const styles = StyleSheet.create({
   headerButtonRow: {
     // Style for buttons in header
     flexDirection: "row",
+  },
+  // --- Storage Stats Area Styles ---
+  statsArea: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#ccc",
+    backgroundColor: "#f8f8f8", // Slightly different background
+  },
+  statsText: {
+    fontSize: 13,
+    color: "#333",
+    textAlign: "center",
+  },
+  refreshButton: {
+    padding: 5,
+  },
+  refreshButtonText: {
+    fontSize: 18, // Adjust size as needed
   },
 });
