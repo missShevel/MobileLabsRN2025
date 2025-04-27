@@ -556,7 +556,6 @@ export default function FileManagerScreen() {
                   }}
                   color="#888"
                 />
-                <View style={{ width: 10 }} /> {/* Spacer */}
                 <Button title="Create" onPress={handleCreateFolder} />
               </View>
             </View>
@@ -603,7 +602,6 @@ export default function FileManagerScreen() {
                   }}
                   color="#888"
                 />
-                <View style={{ width: 10 }} />
                 <Button title="Create" onPress={handleCreateFile} />
               </View>
             </View>
@@ -663,7 +661,6 @@ export default function FileManagerScreen() {
                     onPress={() => setIsEditingFile(false)}
                     color="#888"
                   />
-                  <View style={{ width: 10 }} />
                   <Button
                     title="Save"
                     onPress={handleSaveFile}
@@ -909,6 +906,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "flex-end", // Align buttons to the right
     marginTop: 10, // Add margin above buttons
+    gap: 10
   },
   multilineInput: {
     height: 100, // Initial height for multiline
