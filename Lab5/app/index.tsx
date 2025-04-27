@@ -11,6 +11,8 @@ import {
   Modal,
   Button,
   TextInput,
+  ScrollView,
+  Platform,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { format } from "date-fns";
@@ -56,6 +58,37 @@ export default function FileManagerScreen() {
   const [newFileName, setNewFileName] = useState("");
   const [newFileContent, setNewFileContent] = useState("");
   // --------------------------------
+
+  // --- State for View File Modal ---
+  const [viewFileModalVisible, setViewFileModalVisible] = useState(false);
+  const [viewingFileUri, setViewingFileUri] = useState<string | null>(null);
+  const [viewingFileContent, setViewingFileContent] = useState<string | null>(
+    null
+  );
+  const [isFileLoading, setIsFileLoading] = useState<boolean>(false); // Loading state for file content
+  // ---------------------------------
+
+  const readFileContent = async (item: FileSystemItem) => {
+    console.log("Reading file:", item.uri);
+    setViewingFileUri(item.uri); // Store URI to get name later if needed
+    setIsFileLoading(true); // Start loading file content
+    setViewingFileContent(null); // Clear previous content
+    setViewFileModalVisible(true); // Show modal immediately
+
+    try {
+      const content = await FileSystem.readAsStringAsync(item.uri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      setViewingFileContent(content);
+    } catch (error: any) {
+      console.error("Error reading file:", error);
+      Alert.alert("Error Reading File", "Could not read the file content.");
+      setViewingFileContent("Error: Could not load content."); // Show error in modal
+      // Optional: close modal on error after a delay? setViewFileModalVisible(false);
+    } finally {
+      setIsFileLoading(false); // Stop loading file content
+    }
+  };
 
   const loadDirectoryItems = useCallback(
     /* ... keep existing implementation ... */ async (path: string) => {
@@ -105,16 +138,28 @@ export default function FileManagerScreen() {
   );
 
   const handleNavigateToDirectory = (item: FileSystemItem) => {
-    /* ... keep existing implementation ... */
     if (item.isDirectory) {
       const newPath = item.uri.endsWith("/") ? item.uri : item.uri + "/";
       setCurrentPath(newPath);
     } else {
-      Alert.alert(
-        "File Tapped",
-        `File: ${item.name}\n(Opening not implemented)`
-      );
+      // Check if it's a .txt file
+      if (item.name.toLowerCase().endsWith(".txt")) {
+        readFileContent(item); // Call the read function
+      } else {
+        // Handle other file types (optional)
+        Alert.alert(
+          "Cannot Open File",
+          `Cannot open files of type "${
+            item.name.split(".").pop() || "unknown"
+          }".`
+        );
+      }
     }
+  };
+
+  const getFileNameFromUri = (uri: string | null): string => {
+    if (!uri) return "";
+    return uri.split("/").pop() || "";
   };
 
   // Function to handle navigating up (Corrected Version)
@@ -435,6 +480,51 @@ export default function FileManagerScreen() {
       </Modal>
       {/* ---------------------- */}
 
+      {/* --- View File Modal --- */}
+      <Modal
+        animationType="slide"
+        transparent={false} // Usually false for full screen view
+        visible={viewFileModalVisible}
+        onRequestClose={() => {
+          setViewFileModalVisible(false);
+          setViewingFileUri(null);
+          setViewingFileContent(null);
+        }}
+      >
+        <View style={styles.fileViewContainer}>
+          {/* Header with Filename and Close Button */}
+          <View style={styles.fileViewHeader}>
+            <Text
+              style={styles.fileViewTitle}
+              numberOfLines={1}
+              ellipsizeMode="middle"
+            >
+              {getFileNameFromUri(viewingFileUri)}
+            </Text>
+            <Button
+              title="Close"
+              onPress={() => setViewFileModalVisible(false)}
+            />
+          </View>
+
+          {/* Content Area */}
+          <ScrollView style={styles.fileContentScrollView}>
+            {isFileLoading ? (
+              <ActivityIndicator
+                size="large"
+                style={styles.fileContentLoader}
+              />
+            ) : (
+              <Text style={styles.fileContentText}>
+                {viewingFileContent ?? ""}
+              </Text>
+            )}
+          </ScrollView>
+          {/* TODO: Add Edit button later here */}
+        </View>
+      </Modal>
+      {/* ----------------------- */}
+
       {/* --- Button Row --- */}
       <View style={styles.buttonRow}>
         <TouchableOpacity
@@ -600,5 +690,38 @@ const styles = StyleSheet.create({
     height: 100, // Initial height for multiline
     textAlignVertical: "top", // Align text to top in Android
     paddingTop: 10, // Add padding top
+  },
+  fileViewContainer: {
+    flex: 1,
+    marginTop: 40, // Add margin for status bar area
+    backgroundColor: "#fff",
+  },
+  fileViewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    backgroundColor: "#f8f8f8", // Light header background
+  },
+  fileViewTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    flex: 1, // Allow title to take space
+    marginRight: 10, // Space before button
+  },
+  fileContentScrollView: {
+    flex: 1,
+    padding: 15, // Padding around content
+  },
+  fileContentLoader: {
+    marginTop: 50, // Space loader down
+  },
+  fileContentText: {
+    fontSize: 16,
+    fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace", // Monospace font for code/text
+    color: "#333",
   },
 });
