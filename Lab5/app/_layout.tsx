@@ -16,6 +16,8 @@ export default function RootLayout() {
       try {
         console.log('Checking directory:', baseDir);
         const dirInfo = await FileSystem.getInfoAsync(baseDir);
+        console.log(dirInfo);
+        
         if (!dirInfo.exists) {
           console.log("Directory doesn't exist, creating...");
           await FileSystem.makeDirectoryAsync(baseDir, { intermediates: true });
